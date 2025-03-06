@@ -1,0 +1,11 @@
+
+CXX = g++
+CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -pthread
+
+all: web_server
+
+web_server: web_server.cpp compression_algorithms.cpp
+	$(CXX) $(CXXFLAGS) -o web_server web_server.cpp compression_algorithms.cpp
+
+clean:
+	rm -f web_server
