@@ -8,6 +8,26 @@ This directory contains the C++ implementation of various compression algorithms
 - Delta Encoding
 - LZ77 Compression
 
+## Dependencies
+
+- Crow - A C++ microframework for web (https://github.com/CrowCpp/Crow)
+
+### Installing Crow
+
+Crow is a header-only library, so you can just download the single header file:
+
+```bash
+wget https://github.com/CrowCpp/Crow/releases/latest/download/crow_all.h -O crow.h
+```
+
+Or using curl:
+
+```bash
+curl -L https://github.com/CrowCpp/Crow/releases/latest/download/crow_all.h -o crow.h
+```
+
+Place the downloaded `crow.h` file in the `src/cpp` directory before building.
+
 ## Building and Running
 
 ### Standalone Test
@@ -24,6 +44,10 @@ make -f Makefile
 To build and run the web server that exposes the compression algorithms via a REST API:
 
 ```bash
+# First, make sure you have crow.h in the directory
+wget https://github.com/CrowCpp/Crow/releases/latest/download/crow_all.h -O crow.h
+
+# Then build and run
 make -f Makefile.web
 ./web_server [port]
 ```

@@ -1,11 +1,12 @@
 
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -pthread
+CXXFLAGS = -std=c++17 -Wall -Wextra -O2 -pthread -I/usr/local/include
+LDFLAGS = -L/usr/local/lib
 
 all: web_server
 
-web_server: web_server.cpp compression_algorithms.cpp
-	$(CXX) $(CXXFLAGS) -o web_server web_server.cpp compression_algorithms.cpp
+web_server: web_server_crow.cpp compression_algorithms.cpp
+	$(CXX) $(CXXFLAGS) -o web_server web_server_crow.cpp compression_algorithms.cpp $(LDFLAGS)
 
 clean:
 	rm -f web_server
