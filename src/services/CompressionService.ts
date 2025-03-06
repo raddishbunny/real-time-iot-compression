@@ -11,6 +11,7 @@ export interface CompressionResult {
 interface CompressionResponse {
   originalSize: number;
   results: CompressionResult[];
+  originalData?: string;
 }
 
 export class CompressionService {
@@ -47,6 +48,34 @@ export class CompressionService {
       console.error('Error fetching compression results:', error);
       // Return mock data if the C++ server is not available
       return this.getMockCompressionResults();
+    }
+  }
+
+  /**
+   * Send custom data to the C++ backend for compression
+   */
+  async compressCustomData(data: string): Promise<CompressionResponse> {
+    try {
+      const response = await fetch(`${this.baseUrl}/api/compress/custom`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ data }),
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('Error compressing custom data:', error);
+      // Return mock data if the C++ server is not available
+      return {
+        ...this.getMockCompressionResults(),
+        originalData: data
+      };
     }
   }
 

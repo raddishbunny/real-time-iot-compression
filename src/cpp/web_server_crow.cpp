@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
     // Add the CORS middleware
     app.use<CORSMiddleware>();
     
-    // Define the compression endpoint
+    // Define the compression endpoint for auto-generated data
     CROW_ROUTE(app, "/api/compress")
     ([](const crow::request& req) {
         // Generate random test data (simulate IoT data)
@@ -100,8 +100,73 @@ int main(int argc, char* argv[]) {
         return response;
     });
     
+    // Define the compression endpoint for user data
+    CROW_ROUTE(app, "/api/compress/custom")
+    .methods("POST"_method)
+    ([](const crow::request& req) {
+        auto jsonData = crow::json::load(req.body);
+        
+        // Check if the JSON parsing was successful and contains the 'data' field
+        if (!jsonData || !jsonData.has("data")) {
+            crow::json::wvalue error;
+            error["error"] = "Invalid request format. Expected JSON with 'data' field.";
+            return crow::response(400, error);
+        }
+        
+        // Get the data from the request
+        std::string userData = jsonData["data"].s();
+        
+        if (userData.empty()) {
+            crow::json::wvalue error;
+            error["error"] = "Data cannot be empty.";
+            return crow::response(400, error);
+        }
+        
+        // Run compression algorithms on user data
+        auto resultHuffman = Huffman::compress(userData);
+        auto resultRLE = RLE::compress(userData);
+        auto resultDelta = Delta::compress(userData);
+        auto resultLZ77 = LZ77::compress(userData);
+        
+        // Create JSON response
+        crow::json::wvalue response;
+        response["originalSize"] = userData.size();
+        response["originalData"] = userData;
+        
+        crow::json::wvalue results;
+        
+        crow::json::wvalue huffman;
+        huffman["algorithm"] = "huffman";
+        huffman["compressionRatio"] = resultHuffman.second;
+        huffman["compressedSize"] = resultHuffman.first.size();
+        
+        crow::json::wvalue rle;
+        rle["algorithm"] = "rle";
+        rle["compressionRatio"] = resultRLE.second;
+        rle["compressedSize"] = resultRLE.first.size() * 8;
+        
+        crow::json::wvalue delta;
+        delta["algorithm"] = "delta";
+        delta["compressionRatio"] = resultDelta.second;
+        delta["compressedSize"] = resultDelta.first.size() * 8;
+        
+        crow::json::wvalue lz77;
+        lz77["algorithm"] = "lz77";
+        lz77["compressionRatio"] = resultLZ77.second;
+        lz77["compressedSize"] = resultLZ77.first.size() * 8;
+        
+        results.push_back(std::move(huffman));
+        results.push_back(std::move(rle));
+        results.push_back(std::move(delta));
+        results.push_back(std::move(lz77));
+        
+        response["results"] = std::move(results);
+        
+        return response;
+    });
+    
     // Add an OPTIONS route for CORS preflight requests
-    CROW_ROUTE(app, "/api/compress")
+    CROW_ROUTE(app, "/api/compress/custom")
     .methods("OPTIONS"_method)
     ([](const crow::request& req) {
         crow::response res;
@@ -118,7 +183,10 @@ int main(int argc, char* argv[]) {
         return "<html><body>"
                "<h1>IoT Data Compression Server</h1>"
                "<p>API Endpoints:</p>"
-               "<ul><li>GET /api/compress - Run compression on simulated IoT data</li></ul>"
+               "<ul>"
+               "<li>GET /api/compress - Run compression on simulated IoT data</li>"
+               "<li>POST /api/compress/custom - Run compression on user-provided data</li>"
+               "</ul>"
                "</body></html>";
     });
     

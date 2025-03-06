@@ -9,6 +9,7 @@ import CompressionChart from '@/components/CompressionChart';
 import DeviceList from '@/components/DeviceList';
 import AlgorithmComparison from '@/components/AlgorithmComparison';
 import SimulationControl from '@/components/SimulationControl';
+import CustomDataCompression from '@/components/CustomDataCompression';
 
 const Index = () => {
   const [updateInterval, setUpdateInterval] = useState(2000);
@@ -88,7 +89,10 @@ const Index = () => {
             </div>
           </div>
           
-          <AlgorithmComparison compressionResults={compressionResults} />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <AlgorithmComparison compressionResults={compressionResults} />
+            <CustomDataCompression />
+          </div>
           
           <DeviceList devices={devices} />
         </div>
