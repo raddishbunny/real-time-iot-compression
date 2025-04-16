@@ -1,7 +1,6 @@
-
 import { useState, useEffect, useRef } from 'react';
 
-export type Algorithm = 'huffman' | 'rle' | 'delta' | 'lz77';
+export type Algorithm = 'huffman' | 'delta';
 
 export interface CompressionResult {
   algorithm: Algorithm;
@@ -23,13 +22,11 @@ export interface Device {
 export interface CompressionDataPoint {
   timestamp: number;
   huffman: number;
-  rle: number;
   delta: number;
-  lz77: number;
   dataSize: number;
 }
 
-const ALGORITHMS: Algorithm[] = ['huffman', 'rle', 'delta', 'lz77'];
+const ALGORITHMS: Algorithm[] = ['huffman', 'delta'];
 
 // Generate a random compression value between 0.1 and 0.9
 const randomCompressionRatio = () => 0.1 + Math.random() * 0.8;
@@ -76,9 +73,7 @@ export const generateHistoricalData = (points: number): CompressionDataPoint[] =
     return {
       timestamp: now - (points - i) * interval,
       huffman: 1 - (0.2 + Math.random() * 0.3),
-      rle: 1 - (0.4 + Math.random() * 0.3),
       delta: 1 - (0.3 + Math.random() * 0.3),
-      lz77: 1 - (0.25 + Math.random() * 0.25),
       dataSize
     };
   });
@@ -137,9 +132,7 @@ export const useCompressionData = (updateInterval = 2000) => {
           const newPoint = {
             timestamp: Date.now(),
             huffman: 1 - (0.2 + Math.random() * 0.3),
-            rle: 1 - (0.4 + Math.random() * 0.3),
             delta: 1 - (0.3 + Math.random() * 0.3),
-            lz77: 1 - (0.25 + Math.random() * 0.25),
             dataSize: 1000 + Math.random() * 9000
           };
           return [...prev.slice(1), newPoint];

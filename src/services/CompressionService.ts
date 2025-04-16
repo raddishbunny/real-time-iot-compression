@@ -11,7 +11,7 @@ export interface CompressionResult {
 export interface CompressionResponse {
   originalSize: number;
   results: CompressionResult[];
-  originalData: string; // Changed from optional to required
+  originalData: string;
 }
 
 export class CompressionService {
@@ -27,16 +27,10 @@ export class CompressionService {
     return CompressionService.instance;
   }
 
-  /**
-   * Set the base URL for the compression API
-   */
   setBaseUrl(url: string): void {
     this.baseUrl = url;
   }
 
-  /**
-   * Get compression results from the C++ backend
-   */
   async getCompressionResults(): Promise<CompressionResponse> {
     try {
       const response = await fetch(`${this.baseUrl}/api/compress`);
@@ -45,21 +39,16 @@ export class CompressionService {
       }
       const data = await response.json();
       
-      // Ensure originalData exists (with empty string as fallback)
       return {
         ...data,
         originalData: data.originalData || "",
       };
     } catch (error) {
       console.error('Error fetching compression results:', error);
-      // Return mock data if the C++ server is not available
       return this.getMockCompressionResults();
     }
   }
 
-  /**
-   * Send custom data to the C++ backend for compression
-   */
   async compressCustomData(data: string): Promise<CompressionResponse> {
     try {
       console.log(`Sending data to ${this.baseUrl}/api/compress/custom:`, { data });
@@ -81,39 +70,30 @@ export class CompressionService {
       const result = await response.json();
       console.log('Received compression result:', result);
       
-      // Ensure originalData exists
       return {
         ...result,
         originalData: result.originalData || data,
       };
     } catch (error) {
       console.error('Error compressing custom data:', error);
-      // Use actual user data instead of mock data
       return {
         originalSize: data.length,
         originalData: data,
         results: [
           { algorithm: 'huffman', compressionRatio: data.length > 10 ? 0.45 : 0.1, compressedSize: Math.floor(data.length * 0.55 * 8) },
-          { algorithm: 'rle', compressionRatio: data.length > 10 ? 0.30 : 0.05, compressedSize: Math.floor(data.length * 0.70 * 8) },
-          { algorithm: 'delta', compressionRatio: data.length > 10 ? 0.25 : 0.03, compressedSize: Math.floor(data.length * 0.75 * 8) },
-          { algorithm: 'lz77', compressionRatio: data.length > 10 ? 0.42 : 0.08, compressedSize: Math.floor(data.length * 0.58 * 8) }
+          { algorithm: 'delta', compressionRatio: data.length > 10 ? 0.25 : 0.03, compressedSize: Math.floor(data.length * 0.75 * 8) }
         ]
       };
     }
   }
 
-  /**
-   * Get mock compression results (fallback)
-   */
   private getMockCompressionResults(): CompressionResponse {
     return {
       originalSize: 1000,
-      originalData: "Mock compression data", // Added originalData to match the updated interface
+      originalData: "Mock compression data",
       results: [
         { algorithm: 'huffman', compressionRatio: 0.45, compressedSize: 550 },
-        { algorithm: 'rle', compressionRatio: 0.30, compressedSize: 700 },
-        { algorithm: 'delta', compressionRatio: 0.25, compressedSize: 750 },
-        { algorithm: 'lz77', compressionRatio: 0.42, compressedSize: 580 }
+        { algorithm: 'delta', compressionRatio: 0.25, compressedSize: 750 }
       ]
     };
   }
