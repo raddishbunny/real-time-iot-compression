@@ -19,7 +19,7 @@ interface CompressionChartProps {
 
 const CompressionChart = ({ data }: CompressionChartProps) => {
   const [activeAlgorithms, setActiveAlgorithms] = useState<Set<Algorithm>>(
-    new Set(['huffman', 'rle', 'delta', 'lz77'])
+    new Set(['huffman', 'delta'])
   );
   
   const toggleAlgorithm = (algorithm: Algorithm) => {
@@ -64,17 +64,13 @@ const CompressionChart = ({ data }: CompressionChartProps) => {
 
   const algorithmColors = {
     huffman: '#0ea5e9',
-    rle: '#84cc16',
-    delta: '#8b5cf6',
-    lz77: '#f97316'
+    delta: '#8b5cf6'
   };
   
   // Map algorithm names to display names
   const algorithmNames = {
     huffman: 'Huffman',
-    rle: 'Run-Length',
-    delta: 'Delta',
-    lz77: 'LZ77'
+    delta: 'Delta'
   };
 
   return (
@@ -90,7 +86,7 @@ const CompressionChart = ({ data }: CompressionChartProps) => {
           <p className="text-sm text-muted-foreground">Real-time compression ratio by algorithm</p>
         </div>
         <div className="flex flex-wrap gap-2 mt-4 sm:mt-0">
-          {(['huffman', 'rle', 'delta', 'lz77'] as Algorithm[]).map(algorithm => (
+          {(['huffman', 'delta'] as Algorithm[]).map(algorithm => (
             <button
               key={algorithm}
               onClick={() => toggleAlgorithm(algorithm)}
