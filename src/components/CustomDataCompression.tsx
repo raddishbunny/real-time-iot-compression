@@ -36,15 +36,16 @@ const CustomDataCompression = () => {
     setIsCompressing(true);
     try {
       const result = await CompressionService.compressCustomData(userData);
-      setCompressionResult(result as CustomCompressionResult);
+      setCompressionResult(result);
       toast({
         title: "Compression Complete",
         description: "Data has been compressed successfully",
       });
     } catch (error) {
+      console.error('Error compressing data:', error);
       toast({
         title: "Compression Failed",
-        description: "Failed to compress data. Please try again.",
+        description: "Failed to compress data. Make sure the C++ backend server is running.",
         variant: "destructive",
       });
     } finally {

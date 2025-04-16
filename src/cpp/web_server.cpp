@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <string>
 #include <cstdlib>
@@ -110,6 +109,25 @@ private:
         return data;
     }
     
+    // Parse JSON request body
+    std::string parseJsonValue(const std::string& json, const std::string& key) {
+        std::string keyStr = "\"" + key + "\"";
+        size_t pos = json.find(keyStr);
+        if (pos == std::string::npos) return "";
+        
+        pos = json.find(":", pos);
+        if (pos == std::string::npos) return "";
+        
+        pos = json.find("\"", pos);
+        if (pos == std::string::npos) return "";
+        
+        size_t start = pos + 1;
+        size_t end = json.find("\"", start);
+        if (end == std::string::npos) return "";
+        
+        return json.substr(start, end - start);
+    }
+    
     void handleClient(SocketType clientSocket) {
         const int bufferSize = 4096;
         char buffer[bufferSize];
@@ -168,7 +186,133 @@ private:
             response += "    }\n";
             response += "  ]\n";
             response += "}\n";
-        } else {
+        } 
+        else if (request.find("POST /api/compress/custom") != std::string::npos) {
+            // Find the content length
+            std::string contentLengthStr = "Content-Length: ";
+            size_t contentLengthPos = request.find(contentLengthStr);
+            if (contentLengthPos == std::string::npos) {
+                response = "HTTP/1.1 400 Bad Request\r\n";
+                response += "Content-Type: application/json\r\n";
+                response += "Access-Control-Allow-Origin: *\r\n";
+                response += "Connection: close\r\n\r\n";
+                response += "{\"error\": \"Content-Length not found\"}";
+                send(clientSocket, response.c_str(), response.size(), 0);
+                CLOSE_SOCKET(clientSocket);
+                return;
+            }
+            
+            size_t contentLengthStart = contentLengthPos + contentLengthStr.length();
+            size_t contentLengthEnd = request.find("\r\n", contentLengthStart);
+            std::string contentLengthValue = request.substr(contentLengthStart, contentLengthEnd - contentLengthStart);
+            int contentLength = std::stoi(contentLengthValue);
+            
+            // Find the start of the body
+            size_t bodyStart = request.find("\r\n\r\n");
+            if (bodyStart == std::string::npos) {
+                response = "HTTP/1.1 400 Bad Request\r\n";
+                response += "Content-Type: application/json\r\n";
+                response += "Access-Control-Allow-Origin: *\r\n";
+                response += "Connection: close\r\n\r\n";
+                response += "{\"error\": \"Request body not found\"}";
+                send(clientSocket, response.c_str(), response.size(), 0);
+                CLOSE_SOCKET(clientSocket);
+                return;
+            }
+            
+            bodyStart += 4; // Skip the \r\n\r\n
+            std::string body = request.substr(bodyStart);
+            
+            // If we haven't received the full body yet, read more
+            if (body.length() < contentLength) {
+                int remainingLength = contentLength - body.length();
+                char* additionalBuffer = new char[remainingLength + 1];
+                
+                int additionalBytesRead = recv(clientSocket, additionalBuffer, remainingLength, 0);
+                if (additionalBytesRead > 0) {
+                    additionalBuffer[additionalBytesRead] = '\0';
+                    body += additionalBuffer;
+                }
+                
+                delete[] additionalBuffer;
+            }
+            
+            // Try to parse the JSON body to get the data
+            std::string userData = "";
+            size_t dataPos = body.find("\"data\"");
+            if (dataPos != std::string::npos) {
+                size_t colonPos = body.find(":", dataPos);
+                if (colonPos != std::string::npos) {
+                    size_t valueStart = body.find("\"", colonPos);
+                    if (valueStart != std::string::npos) {
+                        valueStart++; // Skip the opening quote
+                        size_t valueEnd = body.find("\"", valueStart);
+                        if (valueEnd != std::string::npos) {
+                            userData = body.substr(valueStart, valueEnd - valueStart);
+                        }
+                    }
+                }
+            }
+            
+            if (userData.empty()) {
+                response = "HTTP/1.1 400 Bad Request\r\n";
+                response += "Content-Type: application/json\r\n";
+                response += "Access-Control-Allow-Origin: *\r\n";
+                response += "Connection: close\r\n\r\n";
+                response += "{\"error\": \"Invalid request format or missing 'data' field\"}";
+                send(clientSocket, response.c_str(), response.size(), 0);
+                CLOSE_SOCKET(clientSocket);
+                return;
+            }
+            
+            // Run compression algorithms on the user data
+            auto resultHuffman = Huffman::compress(userData);
+            auto resultRLE = RLE::compress(userData);
+            auto resultDelta = Delta::compress(userData);
+            auto resultLZ77 = LZ77::compress(userData);
+            
+            // Create JSON response
+            response = "HTTP/1.1 200 OK\r\n";
+            response += "Content-Type: application/json\r\n";
+            response += "Access-Control-Allow-Origin: *\r\n";
+            response += "Connection: close\r\n\r\n";
+            
+            response += "{\n";
+            response += "  \"originalSize\": " + std::to_string(userData.size()) + ",\n";
+            response += "  \"originalData\": \"" + userData + "\",\n";
+            response += "  \"results\": [\n";
+            response += "    {\n";
+            response += "      \"algorithm\": \"huffman\",\n";
+            response += "      \"compressionRatio\": " + std::to_string(resultHuffman.second) + ",\n";
+            response += "      \"compressedSize\": " + std::to_string(resultHuffman.first.size()) + "\n";
+            response += "    },\n";
+            response += "    {\n";
+            response += "      \"algorithm\": \"rle\",\n";
+            response += "      \"compressionRatio\": " + std::to_string(resultRLE.second) + ",\n";
+            response += "      \"compressedSize\": " + std::to_string(resultRLE.first.size() * 8) + "\n";
+            response += "    },\n";
+            response += "    {\n";
+            response += "      \"algorithm\": \"delta\",\n";
+            response += "      \"compressionRatio\": " + std::to_string(resultDelta.second) + ",\n";
+            response += "      \"compressedSize\": " + std::to_string(resultDelta.first.size() * 8) + "\n";
+            response += "    },\n";
+            response += "    {\n";
+            response += "      \"algorithm\": \"lz77\",\n";
+            response += "      \"compressionRatio\": " + std::to_string(resultLZ77.second) + ",\n";
+            response += "      \"compressedSize\": " + std::to_string(resultLZ77.first.size() * 8) + "\n";
+            response += "    }\n";
+            response += "  ]\n";
+            response += "}\n";
+        }
+        else if (request.find("OPTIONS") != std::string::npos) {
+            // Handle CORS preflight requests
+            response = "HTTP/1.1 204 No Content\r\n";
+            response += "Access-Control-Allow-Origin: *\r\n";
+            response += "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n";
+            response += "Access-Control-Allow-Headers: Content-Type\r\n";
+            response += "Connection: close\r\n\r\n";
+        }
+        else {
             // Default response
             response = "HTTP/1.1 200 OK\r\n";
             response += "Content-Type: text/html\r\n";
@@ -176,7 +320,10 @@ private:
             response += "<html><body>";
             response += "<h1>IoT Data Compression Server</h1>";
             response += "<p>API Endpoints:</p>";
-            response += "<ul><li>GET /api/compress - Run compression on simulated IoT data</li></ul>";
+            response += "<ul>";
+            response += "<li>GET /api/compress - Run compression on simulated IoT data</li>";
+            response += "<li>POST /api/compress/custom - Run compression on user-provided data</li>";
+            response += "</ul>";
             response += "</body></html>";
         }
         
