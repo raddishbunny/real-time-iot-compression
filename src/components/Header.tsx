@@ -2,9 +2,11 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from "@/lib/utils";
+import { useNavigate } from 'react-router-dom';
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false);
+  const navigate = useNavigate();
   
   useEffect(() => {
     const handleScroll = () => {
@@ -45,13 +47,34 @@ const Header = () => {
         </div>
         
         <nav className="hidden md:flex space-x-8">
-          <a href="#" className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors">Dashboard</a>
-          <a href="#" className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors">Devices</a>
-          <a href="#" className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors">Algorithms</a>
-          <a href="#" className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors">Settings</a>
+          <a href="/" className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors">Dashboard</a>
+          <a 
+            href="#devices" 
+            className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
+            onClick={(e) => {
+              e.preventDefault();
+              const devicesSection = document.querySelector('#devices');
+              if (devicesSection) {
+                devicesSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
+            Devices
+          </a>
+          <a 
+            href="#algorithms" 
+            className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
+            onClick={(e) => {
+              e.preventDefault();
+              const algorithmsSection = document.querySelector('#algorithms');
+              if (algorithmsSection) {
+                algorithmsSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
+            Algorithms
+          </a>
         </nav>
-        
-        {/* Removed Documentation and Connect Device buttons */}
       </div>
     </motion.header>
   );

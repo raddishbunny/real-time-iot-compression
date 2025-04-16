@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useCompressionData } from '@/lib/simulationData';
 import { motion } from 'framer-motion';
@@ -25,7 +24,6 @@ const Index = () => {
   } = useCompressionData(updateInterval);
   
   useEffect(() => {
-    // Simulate loading time
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 1000);
@@ -89,16 +87,16 @@ const Index = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div id="algorithms" className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <AlgorithmComparison compressionResults={compressionResults} />
             <CustomDataCompression />
           </div>
           
-          <DeviceList devices={devices} />
+          <div id="devices">
+            <DeviceList devices={devices} />
+          </div>
         </div>
       </motion.main>
-      
-      {/* Removed entire footer */}
     </div>
   );
 };
