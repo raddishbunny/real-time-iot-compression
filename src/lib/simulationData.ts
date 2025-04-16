@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export type Algorithm = 'huffman' | 'rle' | 'delta' | 'lz77';
 
@@ -104,48 +104,65 @@ export const useCompressionData = (updateInterval = 2000) => {
     Math.floor(50000 + Math.random() * 950000)
   );
 
+  // Reference to the interval ID
+  const intervalRef = useRef<number | null>(null);
+
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      // Update compression results
-      setCompressionResults(ALGORITHMS.map(generateCompressionResult));
-      
-      // Update devices occasionally
-      if (Math.random() > 0.7) {
-        setDevices(prevDevices => 
-          prevDevices.map(device => ({
-            ...device,
-            status: Math.random() > 0.1 ? 'active' : 'inactive',
-            dataRate: Math.floor(10 + Math.random() * 90),
-            lastSeen: new Date().toISOString()
-          }))
-        );
-      }
-      
-      // Add new historical data point
-      setHistoricalData(prev => {
-        const newPoint = {
-          timestamp: Date.now(),
-          huffman: 1 - (0.2 + Math.random() * 0.3),
-          rle: 1 - (0.4 + Math.random() * 0.3),
-          delta: 1 - (0.3 + Math.random() * 0.3),
-          lz77: 1 - (0.25 + Math.random() * 0.25),
-          dataSize: 1000 + Math.random() * 9000
-        };
-        return [...prev.slice(1), newPoint];
-      });
-      
-      // Update totals
-      const newDataProcessed = Math.floor(1000 + Math.random() * 9000);
-      const avgCompressionRatio = 0.4;
-      const newDataSaved = Math.floor(newDataProcessed * avgCompressionRatio);
-      
-      setTotalDataProcessed(prev => prev + newDataProcessed);
-      setTotalDataSaved(prev => prev + newDataSaved);
-      
-    }, updateInterval);
+    // Clear previous interval if it exists
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
     
-    return () => clearInterval(intervalId);
-  }, [updateInterval]);
+    // Only set a new interval if updateInterval is greater than 0
+    if (updateInterval > 0) {
+      intervalRef.current = window.setInterval(() => {
+        // Update compression results
+        setCompressionResults(ALGORITHMS.map(generateCompressionResult));
+        
+        // Update devices occasionally
+        if (Math.random() > 0.7) {
+          setDevices(prevDevices => 
+            prevDevices.map(device => ({
+              ...device,
+              status: Math.random() > 0.1 ? 'active' : 'inactive',
+              dataRate: Math.floor(10 + Math.random() * 90),
+              lastSeen: new Date().toISOString()
+            }))
+          );
+        }
+        
+        // Add new historical data point
+        setHistoricalData(prev => {
+          const newPoint = {
+            timestamp: Date.now(),
+            huffman: 1 - (0.2 + Math.random() * 0.3),
+            rle: 1 - (0.4 + Math.random() * 0.3),
+            delta: 1 - (0.3 + Math.random() * 0.3),
+            lz77: 1 - (0.25 + Math.random() * 0.25),
+            dataSize: 1000 + Math.random() * 9000
+          };
+          return [...prev.slice(1), newPoint];
+        });
+        
+        // Update totals
+        const newDataProcessed = Math.floor(1000 + Math.random() * 9000);
+        const avgCompressionRatio = 0.4;
+        const newDataSaved = Math.floor(newDataProcessed * avgCompressionRatio);
+        
+        setTotalDataProcessed(prev => prev + newDataProcessed);
+        setTotalDataSaved(prev => prev + newDataSaved);
+      }, updateInterval);
+    }
+    
+    // Cleanup on unmount or when updateInterval changes
+    return () => {
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [updateInterval]); // Only dependending on updateInterval
   
   return {
     compressionResults,

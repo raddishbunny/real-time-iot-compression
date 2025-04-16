@@ -21,18 +21,21 @@ const SimulationControl = ({
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = Number(e.target.value);
     setSliderValue(newValue);
-    onUpdateIntervalChange(newValue * 1000);
+    if (isRunning) {
+      onUpdateIntervalChange(newValue * 1000);
+    }
   };
   
   const handlePlayPause = () => {
-    if (isRunning) {
-      // Pause simulation
-      setIsRunning(false);
-      onUpdateIntervalChange(0); // Use 0 to signal stopping the interval
-    } else {
+    const newIsRunning = !isRunning;
+    setIsRunning(newIsRunning);
+    
+    if (newIsRunning) {
       // Resume simulation
-      setIsRunning(true);
       onUpdateIntervalChange(sliderValue * 1000);
+    } else {
+      // Pause simulation - use a special value (0) to signal stopping
+      onUpdateIntervalChange(0);
     }
   };
 
