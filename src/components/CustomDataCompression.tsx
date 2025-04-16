@@ -1,22 +1,13 @@
-
 import { useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
-import CompressionService from '@/services/CompressionService';
+import CompressionService, { CompressionResponse } from '@/services/CompressionService';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Code } from 'lucide-react';
 
-export interface CustomCompressionResult {
-  originalSize: number;
-  originalData: string;
-  results: {
-    algorithm: string;
-    compressionRatio: number;
-    compressedSize: number;
-  }[];
-}
+type CustomCompressionResult = CompressionResponse;
 
 const CustomDataCompression = () => {
   const [userData, setUserData] = useState('');

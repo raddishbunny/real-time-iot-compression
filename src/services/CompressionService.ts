@@ -8,10 +8,10 @@ export interface CompressionResult {
   compressedSize: number;
 }
 
-interface CompressionResponse {
+export interface CompressionResponse {
   originalSize: number;
   results: CompressionResult[];
-  originalData?: string;
+  originalData: string; // Changed from optional to required
 }
 
 export class CompressionService {
@@ -43,7 +43,13 @@ export class CompressionService {
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-      return await response.json();
+      const data = await response.json();
+      
+      // Ensure originalData exists (with empty string as fallback)
+      return {
+        ...data,
+        originalData: data.originalData || "",
+      };
     } catch (error) {
       console.error('Error fetching compression results:', error);
       // Return mock data if the C++ server is not available
@@ -74,7 +80,12 @@ export class CompressionService {
       
       const result = await response.json();
       console.log('Received compression result:', result);
-      return result;
+      
+      // Ensure originalData exists
+      return {
+        ...result,
+        originalData: result.originalData || data,
+      };
     } catch (error) {
       console.error('Error compressing custom data:', error);
       // Use actual user data instead of mock data
@@ -97,6 +108,7 @@ export class CompressionService {
   private getMockCompressionResults(): CompressionResponse {
     return {
       originalSize: 1000,
+      originalData: "Mock compression data", // Added originalData to match the updated interface
       results: [
         { algorithm: 'huffman', compressionRatio: 0.45, compressedSize: 550 },
         { algorithm: 'rle', compressionRatio: 0.30, compressedSize: 700 },
