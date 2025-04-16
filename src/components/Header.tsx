@@ -51,14 +51,7 @@ const Header = () => {
           <a href="#" className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors">Settings</a>
         </nav>
         
-        <div className="flex items-center space-x-4">
-          <button className="text-sm font-medium text-primary hover:text-primary/80 transition-colors">
-            Documentation
-          </button>
-          <button className="bg-primary hover:bg-primary/90 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
-            Connect Device
-          </button>
-        </div>
+        {/* Removed Documentation and Connect Device buttons */}
       </div>
     </motion.header>
   );

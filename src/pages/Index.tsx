@@ -98,22 +98,7 @@ const Index = () => {
         </div>
       </motion.main>
       
-      <footer className="mt-16 py-8 border-t border-border/40">
-        <div className="container mx-auto px-4 max-w-7xl">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-4 md:mb-0">
-              <p className="text-sm text-muted-foreground">
-                © 2023 IoT Compression Dashboard. All rights reserved.
-              </p>
-            </div>
-            <div className="flex space-x-6">
-              <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">Documentation</a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">API</a>
-              <a href="#" className="text-sm text-muted-foreground hover:text-primary transition-colors">GitHub</a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      {/* Removed entire footer */}
     </div>
   );
 };
