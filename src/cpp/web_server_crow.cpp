@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <string>
 #include <random>
@@ -60,9 +59,7 @@ int main(int argc, char* argv[]) {
         
         // Run compression algorithms
         auto resultHuffman = Huffman::compress(testData);
-        auto resultRLE = RLE::compress(testData);
         auto resultDelta = Delta::compress(testData);
-        auto resultLZ77 = LZ77::compress(testData);
         
         // Create JSON response
         crow::json::wvalue response;
@@ -75,25 +72,13 @@ int main(int argc, char* argv[]) {
         huffman["compressionRatio"] = resultHuffman.second;
         huffman["compressedSize"] = resultHuffman.first.size();
         
-        crow::json::wvalue rle;
-        rle["algorithm"] = "rle";
-        rle["compressionRatio"] = resultRLE.second;
-        rle["compressedSize"] = resultRLE.first.size() * 8;
-        
         crow::json::wvalue delta;
         delta["algorithm"] = "delta";
         delta["compressionRatio"] = resultDelta.second;
         delta["compressedSize"] = resultDelta.first.size() * 8;
         
-        crow::json::wvalue lz77;
-        lz77["algorithm"] = "lz77";
-        lz77["compressionRatio"] = resultLZ77.second;
-        lz77["compressedSize"] = resultLZ77.first.size() * 8;
-        
         results.push_back(std::move(huffman));
-        results.push_back(std::move(rle));
         results.push_back(std::move(delta));
-        results.push_back(std::move(lz77));
         
         response["results"] = std::move(results);
         
@@ -124,9 +109,7 @@ int main(int argc, char* argv[]) {
         
         // Run compression algorithms on user data
         auto resultHuffman = Huffman::compress(userData);
-        auto resultRLE = RLE::compress(userData);
         auto resultDelta = Delta::compress(userData);
-        auto resultLZ77 = LZ77::compress(userData);
         
         // Create JSON response
         crow::json::wvalue response;
@@ -140,25 +123,13 @@ int main(int argc, char* argv[]) {
         huffman["compressionRatio"] = resultHuffman.second;
         huffman["compressedSize"] = resultHuffman.first.size();
         
-        crow::json::wvalue rle;
-        rle["algorithm"] = "rle";
-        rle["compressionRatio"] = resultRLE.second;
-        rle["compressedSize"] = resultRLE.first.size() * 8;
-        
         crow::json::wvalue delta;
         delta["algorithm"] = "delta";
         delta["compressionRatio"] = resultDelta.second;
         delta["compressedSize"] = resultDelta.first.size() * 8;
         
-        crow::json::wvalue lz77;
-        lz77["algorithm"] = "lz77";
-        lz77["compressionRatio"] = resultLZ77.second;
-        lz77["compressedSize"] = resultLZ77.first.size() * 8;
-        
         results.push_back(std::move(huffman));
-        results.push_back(std::move(rle));
         results.push_back(std::move(delta));
-        results.push_back(std::move(lz77));
         
         response["results"] = std::move(results);
         
