@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import Header from '@/components/Header';
 import CompressionStats from '@/components/CompressionStats';
 import CompressionChart from '@/components/CompressionChart';
-import DeviceList from '@/components/DeviceList';
 import AlgorithmComparison from '@/components/AlgorithmComparison';
 import SimulationControl from '@/components/SimulationControl';
 import CustomDataCompression from '@/components/CustomDataCompression';
@@ -16,7 +15,6 @@ const Index = () => {
   
   const {
     compressionResults,
-    devices,
     historicalData,
     totalDataSaved,
     totalDataProcessed,
@@ -90,10 +88,6 @@ const Index = () => {
           <div id="algorithms" className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <AlgorithmComparison compressionResults={compressionResults} />
             <CustomDataCompression />
-          </div>
-          
-          <div id="devices">
-            <DeviceList devices={devices} />
           </div>
         </div>
       </motion.main>
