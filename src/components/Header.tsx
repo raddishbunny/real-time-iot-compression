@@ -49,19 +49,6 @@ const Header = () => {
         <nav className="hidden md:flex space-x-8">
           <a href="/" className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors">Dashboard</a>
           <a 
-            href="#devices" 
-            className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
-            onClick={(e) => {
-              e.preventDefault();
-              const devicesSection = document.querySelector('#devices');
-              if (devicesSection) {
-                devicesSection.scrollIntoView({ behavior: 'smooth' });
-              }
-            }}
-          >
-            Devices
-          </a>
-          <a 
             href="#algorithms" 
             className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors"
             onClick={(e) => {
