@@ -1,4 +1,3 @@
-
 /**
  * Service to communicate with the C++ compression backend
  */
@@ -31,6 +30,12 @@ export class CompressionService {
     this.baseUrl = url;
   }
 
+  private calculateCompressionRatio(originalSize: number, compressedSize: number): number {
+    // Ensure ratio is between 0 and 1
+    const ratio = Math.max(0, Math.min(1, 1 - (compressedSize / originalSize)));
+    return Math.round(ratio * 100) / 100; // Round to 2 decimal places
+  }
+
   async getCompressionResults(): Promise<CompressionResponse> {
     try {
       const response = await fetch(`${this.baseUrl}/api/compress`);
@@ -39,8 +44,18 @@ export class CompressionService {
       }
       const data = await response.json();
       
+      // Update results with bounded compression ratio
+      const results = data.results.map((result: CompressionResult) => ({
+        ...result,
+        compressionRatio: this.calculateCompressionRatio(
+          data.originalSize, 
+          result.compressedSize
+        )
+      }));
+      
       return {
         ...data,
+        results,
         originalData: data.originalData || "",
       };
     } catch (error) {
@@ -49,6 +64,7 @@ export class CompressionService {
     }
   }
 
+  // Similar update for compressCustomData method
   async compressCustomData(data: string): Promise<CompressionResponse> {
     try {
       console.log(`Sending data to ${this.baseUrl}/api/compress/custom:`, { data });
@@ -70,8 +86,18 @@ export class CompressionService {
       const result = await response.json();
       console.log('Received compression result:', result);
       
+      // Update results with bounded compression ratio
+      const results = result.results.map((res: CompressionResult) => ({
+        ...res,
+        compressionRatio: this.calculateCompressionRatio(
+          result.originalSize, 
+          res.compressedSize
+        )
+      }));
+      
       return {
         ...result,
+        results,
         originalData: result.originalData || data,
       };
     } catch (error) {
@@ -87,13 +113,23 @@ export class CompressionService {
     }
   }
 
+  // Update mock results to use the new calculation method
   private getMockCompressionResults(): CompressionResponse {
+    const originalSize = 1000;
     return {
-      originalSize: 1000,
+      originalSize,
       originalData: "Mock compression data",
       results: [
-        { algorithm: 'huffman', compressionRatio: 0.45, compressedSize: 550 },
-        { algorithm: 'delta', compressionRatio: 0.25, compressedSize: 750 }
+        { 
+          algorithm: 'huffman', 
+          compressionRatio: 0.45, 
+          compressedSize: 550 
+        },
+        { 
+          algorithm: 'delta', 
+          compressionRatio: 0.25, 
+          compressedSize: 750 
+        }
       ]
     };
   }
