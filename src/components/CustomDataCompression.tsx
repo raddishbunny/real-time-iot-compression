@@ -16,26 +16,23 @@ const CustomDataCompression = () => {
   const [compressionResult, setCompressionResult] = useState<CustomCompressionResult | null>(null);
   const [isBackendConnected, setIsBackendConnected] = useState<boolean | null>(null);
 
-  // Test backend connection on component mount
+  // Check backend connection status periodically
   useEffect(() => {
-    testBackendConnection();
+    const checkConnection = async () => {
+      const connected = await CompressionService.testConnection();
+      setIsBackendConnected(connected);
+    };
+    
+    // Initial connection check
+    checkConnection();
+    
+    // Set up interval for periodic checks
+    const connectionInterval = setInterval(checkConnection, 5000);
+    
+    return () => {
+      clearInterval(connectionInterval);
+    };
   }, []);
-
-  const testBackendConnection = async () => {
-    try {
-      // Set the server URL explicitly to ensure we're connecting to the right endpoint
-      CompressionService.setBaseUrl('http://localhost:8081');
-      
-      const isConnected = await CompressionService.testConnection();
-      console.log("Backend connection status:", isConnected);
-      setIsBackendConnected(isConnected);
-      return isConnected;
-    } catch (error) {
-      console.error('Failed to test backend connection:', error);
-      setIsBackendConnected(false);
-      return false;
-    }
-  };
 
   const handleCompression = async () => {
     if (!userData.trim()) {
@@ -49,17 +46,12 @@ const CustomDataCompression = () => {
 
     setIsCompressing(true);
     
-    // Attempt to reconnect to the backend if not already connected
-    if (!isBackendConnected) {
-      await testBackendConnection();
-    }
-    
     try {
       // Clear previous results
       setCompressionResult(null);
       
       console.log("Attempting to compress data with backend...");
-      // Always attempt to use the backend service first
+      // Always attempt to use the backend service
       const result = await CompressionService.compressCustomData(userData);
       console.log("Compression result:", result);
       
@@ -75,16 +67,11 @@ const CustomDataCompression = () => {
       console.error('Error compressing data:', error);
       setIsBackendConnected(false); // Update connection status on failed request
       
-      // We'll still show the user something rather than nothing
-      // but make it clear it's simulated data
       toast({
-        title: "Backend Connection Failed",
-        description: "Couldn't connect to C++ backend. Please make sure the server is running at http://localhost:8081",
+        title: "Compression Failed",
+        description: "Could not compress data. Backend may be unavailable.",
         variant: "destructive",
       });
-      
-      // Don't automatically fall back to simulation mode - inform the user
-      // of the connection error and let them decide what to do
     } finally {
       setIsCompressing(false);
     }
@@ -116,19 +103,14 @@ const CustomDataCompression = () => {
         />
         
         <div className="flex flex-col space-y-2">
-          {isBackendConnected === false && (
-            <div className="text-xs text-destructive mb-2">
-              ⚠️ Not connected to C++ backend. Make sure the server is running at http://localhost:8081
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={testBackendConnection}
-                className="ml-2"
-              >
-                Retry Connection
-              </Button>
-            </div>
-          )}
+          <div className={`flex items-center gap-2 text-sm ${isBackendConnected ? 'text-green-600' : 'text-yellow-600'}`}>
+            <div className={`w-2 h-2 rounded-full ${isBackendConnected ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`}></div>
+            <span>
+              {isBackendConnected === null ? 'Checking backend connection...' : 
+               isBackendConnected ? 'Connected to C++ backend' : 
+               'Attempting to connect to backend...'}
+            </span>
+          </div>
           
           <Button 
             onClick={handleCompression} 
@@ -178,9 +160,7 @@ const CustomDataCompression = () => {
               </div>
             </CardContent>
             <CardFooter className="text-xs text-muted-foreground">
-              {isBackendConnected 
-                ? "Results from C++ compression engine" 
-                : "Simulation results (C++ backend not connected)"}
+              Results from C++ compression engine
             </CardFooter>
           </Card>
         )}

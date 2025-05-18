@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from '@/components/ui/use-toast';
 import CompressionService from '@/services/CompressionService';
@@ -15,8 +15,37 @@ const SimulationControl = ({
 }: SimulationControlProps) => {
   const [isRunning, setIsRunning] = useState(true);
   const [sliderValue, setSliderValue] = useState(updateInterval / 1000);
-  const [cppServerUrl, setCppServerUrl] = useState('http://localhost:8081');
   const [isCppConnected, setIsCppConnected] = useState(false);
+  
+  // Automatically attempt to connect to the C++ backend on component mount
+  useEffect(() => {
+    checkBackendConnection();
+    
+    // Set up periodic checks for backend connection
+    const connectionCheckInterval = setInterval(checkBackendConnection, 10000);
+    
+    return () => {
+      clearInterval(connectionCheckInterval);
+    };
+  }, []);
+  
+  const checkBackendConnection = async () => {
+    try {
+      const connected = await CompressionService.testConnection();
+      setIsCppConnected(connected);
+      
+      if (connected && !isCppConnected) {
+        // Only show toast when first connected
+        toast({
+          title: "C++ Backend Connected",
+          description: "Successfully connected to the C++ compression server",
+        });
+      }
+    } catch (error) {
+      console.error('Backend connection check failed:', error);
+      setIsCppConnected(false);
+    }
+  };
   
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = Number(e.target.value);
@@ -36,38 +65,6 @@ const SimulationControl = ({
     } else {
       // Pause simulation - use a special value (0) to signal stopping
       onUpdateIntervalChange(0);
-    }
-  };
-
-  const handleConnectCpp = async () => {
-    try {
-      // Set the base URL for the compression service
-      CompressionService.setBaseUrl(cppServerUrl);
-      
-      // Test the connection - now using testConnection() instead of getCompressionResults()
-      const connected = await CompressionService.testConnection();
-      
-      setIsCppConnected(connected);
-      if (connected) {
-        toast({
-          title: "Connected to C++ Backend",
-          description: "Successfully connected to the C++ compression server",
-        });
-      } else {
-        toast({
-          title: "Connection Failed",
-          description: "Could not connect to the C++ compression server",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error('Failed to connect to C++ backend:', error);
-      setIsCppConnected(false);
-      toast({
-        title: "Connection Failed",
-        description: "Could not connect to the C++ compression server",
-        variant: "destructive",
-      });
     }
   };
 
@@ -133,33 +130,13 @@ const SimulationControl = ({
           </div>
           
           <div className="flex space-x-2">
-            <button 
-              onClick={handleConnectCpp}
-              className={`px-4 py-2 rounded-lg ${isCppConnected ? 'bg-green-500 hover:bg-green-600' : 'bg-secondary hover:bg-secondary/90'} text-secondary-foreground transition-colors text-sm font-medium`}
-            >
-              {isCppConnected ? 'Connected to C++' : 'Connect C++'}
-            </button>
+            <div className={`px-4 py-2 rounded-lg ${isCppConnected ? 'bg-green-500 text-white' : 'bg-yellow-100 text-yellow-800'} flex items-center text-sm`}>
+              <div className={`w-2 h-2 rounded-full mr-2 ${isCppConnected ? 'bg-white animate-pulse' : 'bg-yellow-500'}`}></div>
+              {isCppConnected ? 'C++ Backend Connected' : 'Connecting to C++ Backend...'}
+            </div>
             <button className="px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium">
               Export Data
             </button>
-          </div>
-        </div>
-        
-        {/* C++ Server URL Input */}
-        <div className={`transition-all duration-300 ${isCppConnected ? 'opacity-50' : 'opacity-100'}`}>
-          <label htmlFor="cpp-server-url" className="text-sm font-medium">
-            C++ Server URL
-          </label>
-          <div className="flex space-x-2 mt-1">
-            <input
-              id="cpp-server-url"
-              type="text"
-              value={cppServerUrl}
-              onChange={(e) => setCppServerUrl(e.target.value)}
-              disabled={isCppConnected}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
-              placeholder="http://localhost:8081"
-            />
           </div>
         </div>
         

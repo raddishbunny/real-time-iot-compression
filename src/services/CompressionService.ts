@@ -20,7 +20,8 @@ export class CompressionService {
   private _isConnected: boolean = false;
 
   private constructor() {
-    // Initialize any properties here
+    // Initialize and try to connect immediately
+    this.testConnection().catch(err => console.error('Initial connection failed:', err));
   }
 
   static getInstance(): CompressionService {
@@ -37,6 +38,8 @@ export class CompressionService {
   setBaseUrl(url: string): void {
     this.baseUrl = url;
     console.log(`Base URL set to: ${this.baseUrl}`);
+    // Try to connect when URL changes
+    this.testConnection().catch(err => console.error('Connection failed after URL change:', err));
   }
 
   private calculateCompressionRatio(originalSize: number, compressedSize: number): number {
@@ -85,6 +88,11 @@ export class CompressionService {
 
   async compressCustomData(data: string): Promise<CompressionResponse> {
     try {
+      // If not connected, try to connect first
+      if (!this._isConnected) {
+        await this.testConnection();
+      }
+      
       console.log(`Sending data to ${this.baseUrl}/api/compress/custom:`, { data });
       
       const response = await fetch(`${this.baseUrl}/api/compress/custom`, {
