@@ -1,0 +1,103 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IoT Compression Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <header class="header">
+      <h1>IoT Compression Dashboard</h1>
+      <div class="theme-toggle">
+        <label class="switch">
+          <input type="checkbox" id="themeToggle">
+          <span class="slider round"></span>
+        </label>
+        <span>Dark Mode</span>
+      </div>
+    </header>
+
+    <main class="dashboard">
+      <section class="simulation-control">
+        <div class="card">
+          <h2>Simulation Control</h2>
+          <div class="form-group">
+            <label for="updateInterval">Update Interval (ms):</label>
+            <input type="range" id="updateInterval" min="500" max="5000" step="100" value="2000">
+            <span id="updateIntervalValue">2000 ms</span>
+          </div>
+          <div class="form-group">
+            <label for="cppBackendUrl">C++ Backend URL:</label>
+            <input type="text" id="cppBackendUrl" value="http://localhost:8081">
+          </div>
+          <button id="connectBackendBtn" class="btn btn-primary">Connect C++ Backend</button>
+          <div id="connectionStatus" class="chip disconnected">Disconnected</div>
+        </div>
+      </section>
+
+      <section class="compression-stats">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-title">Total Data Processed</div>
+            <div id="totalDataProcessed" class="stat-value">0 B</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Total Data Saved</div>
+            <div id="totalDataSaved" class="stat-value">0 B</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-title">Average Compression Ratio</div>
+            <div id="avgCompressionRatio" class="stat-value">0%</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="compression-chart card">
+        <h2>Compression Performance Over Time</h2>
+        <div class="chart-container">
+          <canvas id="compressionChart"></canvas>
+        </div>
+      </section>
+
+      <section class="algorithm-comparison card">
+        <h2>Algorithm Comparison</h2>
+        <div id="algorithmComparisonContainer">
+          <!-- Algorithm comparison results will be inserted here -->
+        </div>
+      </section>
+
+      <section class="custom-compression card">
+        <h2>Custom Data Compression</h2>
+        <div class="form-group">
+          <label for="customData">Enter data to compress:</label>
+          <textarea id="customData" rows="5" placeholder="Type or paste data here to test compression algorithms"></textarea>
+        </div>
+        <button id="compressBtn" class="btn btn-primary">Compress Data</button>
+        <div id="customCompressionResults" class="results-container hidden">
+          <h3>Compression Results</h3>
+          <div class="info-line">Original Size: <span id="originalSize">0 B</span></div>
+          <div id="customResultsList"></div>
+        </div>
+      </section>
+
+      <section class="devices card">
+        <h2>Connected Devices</h2>
+        <div id="deviceList" class="device-list">
+          <!-- Device list will be inserted here -->
+        </div>
+      </section>
+    </main>
+
+    <div id="toast" class="toast"></div>
+  </div>
+  
+  <!-- Include Chart.js for charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <script src="compression-service.js"></script>
+  <script src="simulation-data.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
