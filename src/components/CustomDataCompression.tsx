@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import CompressionService, { CompressionResponse } from '@/services/CompressionService';
@@ -14,6 +13,7 @@ const CustomDataCompression = () => {
   const [userData, setUserData] = useState('');
   const [isCompressing, setIsCompressing] = useState(false);
   const [compressionResult, setCompressionResult] = useState<CustomCompressionResult | null>(null);
+  const [isBackendConnected, setIsBackendConnected] = useState<boolean | null>(null);
 
   // Generate mock compression results based on actual input data
   const generateInputBasedCompressionResults = (input: string) => {
@@ -65,6 +65,19 @@ const CustomDataCompression = () => {
     };
   };
 
+  // Test backend connection on component mount
+  const testBackendConnection = async () => {
+    try {
+      const isConnected = await CompressionService.testConnection();
+      setIsBackendConnected(isConnected);
+      return isConnected;
+    } catch (error) {
+      console.error('Failed to test backend connection:', error);
+      setIsBackendConnected(false);
+      return false;
+    }
+  };
+
   const handleCompression = async () => {
     if (!userData.trim()) {
       toast({
@@ -76,34 +89,36 @@ const CustomDataCompression = () => {
     }
 
     setIsCompressing(true);
+    
+    // Test connection if we haven't already
+    if (isBackendConnected === null) {
+      await testBackendConnection();
+    }
+    
     try {
-      // First try to use the real service
-      const result = await CompressionService.compressCustomData(userData);
+      // Clear previous results
+      setCompressionResult(null);
       
-      // Fixed error: Access isConnected property directly from the singleton instance
-      if (!CompressionService.isConnected) {
-        console.log('Using input-specific mock compression results');
-        const mockResult = generateInputBasedCompressionResults(userData);
-        setCompressionResult(mockResult);
-      } else {
-        setCompressionResult(result);
-      }
+      // Attempt to use the backend service
+      const result = await CompressionService.compressCustomData(userData);
+      setCompressionResult(result);
       
       toast({
         title: "Compression Complete",
         description: "Data has been compressed successfully",
       });
+      
     } catch (error) {
       console.error('Error compressing data:', error);
+      
       // Use our custom mock generator on error
       const mockResult = generateInputBasedCompressionResults(userData);
       setCompressionResult(mockResult);
       
-      // Fixed error: Using "default" variant instead of "warning"
       toast({
         title: "Using Simulation Mode",
         description: "Couldn't connect to C++ backend. Using simulation data instead.",
-        variant: "destructive", // Changed from "warning" to "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsCompressing(false);
@@ -177,7 +192,9 @@ const CustomDataCompression = () => {
               </div>
             </CardContent>
             <CardFooter className="text-xs text-muted-foreground">
-              Results may vary based on data patterns and content
+              {isBackendConnected === true 
+                ? "Results from C++ compression engine" 
+                : "Simulation results (C++ backend not connected)"}
             </CardFooter>
           </Card>
         )}
