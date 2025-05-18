@@ -17,6 +17,7 @@ export interface CompressionResponse {
 export class CompressionService {
   private static instance: CompressionService;
   private baseUrl: string = 'http://localhost:8081';
+  private _isConnected: boolean = false;
 
   private constructor() {}
 
@@ -25,6 +26,10 @@ export class CompressionService {
       CompressionService.instance = new CompressionService();
     }
     return CompressionService.instance;
+  }
+
+  get isConnected(): boolean {
+    return this._isConnected;
   }
 
   setBaseUrl(url: string): void {
@@ -54,6 +59,8 @@ export class CompressionService {
         )
       }));
       
+      this._isConnected = true;
+      
       return {
         ...data,
         results,
@@ -61,6 +68,7 @@ export class CompressionService {
       };
     } catch (error) {
       console.error('Error fetching compression results:', error);
+      this._isConnected = false;
       return this.getMockCompressionResults();
     }
   }
@@ -95,6 +103,8 @@ export class CompressionService {
         )
       }));
       
+      this._isConnected = true;
+      
       return {
         ...result,
         results,
@@ -102,15 +112,10 @@ export class CompressionService {
       };
     } catch (error) {
       console.error('Error compressing custom data:', error);
-      // Return mock data but with more realistic compression ratios
-      return {
-        originalSize: data.length,
-        originalData: data,
-        results: [
-          { algorithm: 'huffman', compressionRatio: data.length > 10 ? 0.45 : 0.1, compressedSize: Math.floor(data.length * 0.55 * 8) },
-          { algorithm: 'delta', compressionRatio: data.length > 10 ? 0.25 : 0.03, compressedSize: Math.floor(data.length * 0.75 * 8) }
-        ]
-      };
+      this._isConnected = false;
+      
+      // Let the component handle mock data generation instead
+      throw error;
     }
   }
 
@@ -132,6 +137,23 @@ export class CompressionService {
         }
       ]
     };
+  }
+
+  async testConnection(): Promise<boolean> {
+    try {
+      const response = await fetch(`${this.baseUrl}/`);
+      if (response.ok) {
+        this._isConnected = true;
+        return true;
+      } else {
+        this._isConnected = false;
+        return false;
+      }
+    } catch (error) {
+      console.error('Connection test failed:', error);
+      this._isConnected = false;
+      return false;
+    }
   }
 }
 
