@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import CompressionService, { CompressionResponse } from '@/services/CompressionService';
 import { motion } from 'framer-motion';
@@ -14,25 +14,6 @@ const CustomDataCompression = () => {
   const [userData, setUserData] = useState('');
   const [isCompressing, setIsCompressing] = useState(false);
   const [compressionResult, setCompressionResult] = useState<CustomCompressionResult | null>(null);
-  const [isBackendConnected, setIsBackendConnected] = useState<boolean | null>(null);
-
-  // Check backend connection status periodically
-  useEffect(() => {
-    const checkConnection = async () => {
-      const connected = await CompressionService.testConnection();
-      setIsBackendConnected(connected);
-    };
-    
-    // Initial connection check
-    checkConnection();
-    
-    // Set up interval for periodic checks
-    const connectionInterval = setInterval(checkConnection, 5000);
-    
-    return () => {
-      clearInterval(connectionInterval);
-    };
-  }, []);
 
   const handleCompression = async () => {
     if (!userData.trim()) {
@@ -45,31 +26,18 @@ const CustomDataCompression = () => {
     }
 
     setIsCompressing(true);
-    
     try {
-      // Clear previous results
-      setCompressionResult(null);
-      
-      console.log("Attempting to compress data with backend...");
-      // Always attempt to use the backend service
       const result = await CompressionService.compressCustomData(userData);
-      console.log("Compression result:", result);
-      
       setCompressionResult(result);
-      setIsBackendConnected(true); // Update connection status on successful request
-      
       toast({
         title: "Compression Complete",
-        description: "Data has been compressed successfully using the C++ backend",
+        description: "Data has been compressed successfully",
       });
-      
     } catch (error) {
       console.error('Error compressing data:', error);
-      setIsBackendConnected(false); // Update connection status on failed request
-      
       toast({
         title: "Compression Failed",
-        description: "Could not compress data. Backend may be unavailable.",
+        description: "Failed to compress data. Make sure the C++ backend server is running.",
         variant: "destructive",
       });
     } finally {
@@ -102,34 +70,18 @@ const CustomDataCompression = () => {
           className="min-h-32 font-mono text-sm"
         />
         
-        <div className="flex flex-col space-y-2">
-          <div className={`flex items-center gap-2 text-sm ${isBackendConnected ? 'text-green-600' : 'text-yellow-600'}`}>
-            <div className={`w-2 h-2 rounded-full ${isBackendConnected ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`}></div>
-            <span>
-              {isBackendConnected === null ? 'Checking backend connection...' : 
-               isBackendConnected ? 'Connected to C++ backend' : 
-               'Attempting to connect to backend...'}
-            </span>
-          </div>
-          
-          <Button 
-            onClick={handleCompression} 
-            disabled={isCompressing || !userData.trim()}
-            className="w-full"
-          >
-            {isCompressing ? 'Compressing...' : 'Compress Data'}
-          </Button>
-        </div>
+        <Button 
+          onClick={handleCompression} 
+          disabled={isCompressing || !userData.trim()}
+          className="w-full"
+        >
+          {isCompressing ? 'Compressing...' : 'Compress Data'}
+        </Button>
 
         {compressionResult && (
           <Card className="mt-6">
             <CardHeader>
               <CardTitle className="text-md">Compression Results</CardTitle>
-              {isBackendConnected && (
-                <div className="text-xs text-green-500">
-                  ✓ Using C++ compression engine
-                </div>
-              )}
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -160,7 +112,7 @@ const CustomDataCompression = () => {
               </div>
             </CardContent>
             <CardFooter className="text-xs text-muted-foreground">
-              Results from C++ compression engine
+              Results may vary based on data patterns and content
             </CardFooter>
           </Card>
         )}
