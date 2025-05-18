@@ -80,9 +80,8 @@ const CustomDataCompression = () => {
       // First try to use the real service
       const result = await CompressionService.compressCustomData(userData);
       
-      // If we got mock data from the service (connection failed), 
-      // use our more sophisticated input-based mock generator
-      if (!CompressionService.getInstance().isConnected) {
+      // Fixed error: Access isConnected property directly from the singleton instance
+      if (!CompressionService.isConnected) {
         console.log('Using input-specific mock compression results');
         const mockResult = generateInputBasedCompressionResults(userData);
         setCompressionResult(mockResult);
@@ -100,10 +99,11 @@ const CustomDataCompression = () => {
       const mockResult = generateInputBasedCompressionResults(userData);
       setCompressionResult(mockResult);
       
+      // Fixed error: Using "default" variant instead of "warning"
       toast({
         title: "Using Simulation Mode",
         description: "Couldn't connect to C++ backend. Using simulation data instead.",
-        variant: "warning",
+        variant: "destructive", // Changed from "warning" to "destructive"
       });
     } finally {
       setIsCompressing(false);
