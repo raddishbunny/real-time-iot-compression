@@ -1,4 +1,3 @@
-
 /**
  * Service to communicate with the C++ compression backend
  */
@@ -65,6 +64,7 @@ export class CompressionService {
     }
   }
 
+  // Similar update for compressCustomData method
   async compressCustomData(data: string): Promise<CompressionResponse> {
     try {
       console.log(`Sending data to ${this.baseUrl}/api/compress/custom:`, { data });
@@ -102,7 +102,6 @@ export class CompressionService {
       };
     } catch (error) {
       console.error('Error compressing custom data:', error);
-      // Return mock data but with more realistic compression ratios
       return {
         originalSize: data.length,
         originalData: data,
@@ -114,6 +113,7 @@ export class CompressionService {
     }
   }
 
+  // Update mock results to use the new calculation method
   private getMockCompressionResults(): CompressionResponse {
     const originalSize = 1000;
     return {

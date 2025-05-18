@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import CompressionService, { CompressionResponse } from '@/services/CompressionService';
@@ -95,13 +94,13 @@ const CustomDataCompression = () => {
                     <div className="flex justify-between items-center mb-1">
                       <span className="text-sm font-medium capitalize">{result.algorithm}</span>
                       <span className="text-sm font-mono">
-                        {Math.min(100, Math.round(result.compressionRatio * 100))}% reduction
+                        {(result.compressionRatio * 100).toFixed(1)}% reduction
                       </span>
                     </div>
                     <div className="w-full bg-secondary/30 h-2 rounded-full">
                       <div 
                         className="bg-primary h-2 rounded-full" 
-                        style={{ width: `${Math.min(100, (1 - result.compressionRatio) * 100)}%` }}
+                        style={{ width: `${(1 - result.compressionRatio) * 100}%` }}
                       ></div>
                     </div>
                     <div className="text-xs text-muted-foreground mt-1">
