@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import CompressionService, { CompressionResponse } from '@/services/CompressionService';
 import { motion } from 'framer-motion';
@@ -15,60 +16,18 @@ const CustomDataCompression = () => {
   const [compressionResult, setCompressionResult] = useState<CustomCompressionResult | null>(null);
   const [isBackendConnected, setIsBackendConnected] = useState<boolean | null>(null);
 
-  // Generate mock compression results based on actual input data
-  const generateInputBasedCompressionResults = (input: string) => {
-    const originalSize = input.length;
-    
-    // Calculate realistic compression ratios based on input patterns
-    let huffmanRatio = 0.2; // Default ratio
-    let deltaRatio = 0.1; // Default ratio
-    
-    // Adjust ratios based on input characteristics
-    if (input.length > 0) {
-      // Check for repeating patterns
-      const repeatingChars = new Set(input).size / input.length;
-      
-      // Lower ratio (better compression) for more repetitive content
-      if (repeatingChars < 0.3) {
-        huffmanRatio = 0.6; // 60% reduction
-        deltaRatio = 0.45; // 45% reduction
-      } else if (repeatingChars < 0.5) {
-        huffmanRatio = 0.4; // 40% reduction
-        deltaRatio = 0.3; // 30% reduction
-      } else {
-        huffmanRatio = 0.25; // 25% reduction
-        deltaRatio = 0.15; // 15% reduction
-      }
-      
-      // Adjust for numeric content which delta encoding handles well
-      const numericContent = (input.match(/[0-9]/g) || []).length / input.length;
-      if (numericContent > 0.5) {
-        deltaRatio += 0.2; // Delta works better on numeric data
-      }
-    }
-    
-    return {
-      originalSize,
-      originalData: input,
-      results: [
-        { 
-          algorithm: 'huffman', 
-          compressionRatio: huffmanRatio, 
-          compressedSize: Math.floor(originalSize * (1 - huffmanRatio) * 8) 
-        },
-        { 
-          algorithm: 'delta', 
-          compressionRatio: deltaRatio, 
-          compressedSize: Math.floor(originalSize * (1 - deltaRatio) * 8) 
-        }
-      ]
-    };
-  };
-
   // Test backend connection on component mount
+  useEffect(() => {
+    testBackendConnection();
+  }, []);
+
   const testBackendConnection = async () => {
     try {
+      // Set the server URL explicitly to ensure we're connecting to the right endpoint
+      CompressionService.setBaseUrl('http://localhost:8081');
+      
       const isConnected = await CompressionService.testConnection();
+      console.log("Backend connection status:", isConnected);
       setIsBackendConnected(isConnected);
       return isConnected;
     } catch (error) {
@@ -90,8 +49,8 @@ const CustomDataCompression = () => {
 
     setIsCompressing(true);
     
-    // Test connection if we haven't already
-    if (isBackendConnected === null) {
+    // Attempt to reconnect to the backend if not already connected
+    if (!isBackendConnected) {
       await testBackendConnection();
     }
     
@@ -99,27 +58,33 @@ const CustomDataCompression = () => {
       // Clear previous results
       setCompressionResult(null);
       
-      // Attempt to use the backend service
+      console.log("Attempting to compress data with backend...");
+      // Always attempt to use the backend service first
       const result = await CompressionService.compressCustomData(userData);
+      console.log("Compression result:", result);
+      
       setCompressionResult(result);
+      setIsBackendConnected(true); // Update connection status on successful request
       
       toast({
         title: "Compression Complete",
-        description: "Data has been compressed successfully",
+        description: "Data has been compressed successfully using the C++ backend",
       });
       
     } catch (error) {
       console.error('Error compressing data:', error);
+      setIsBackendConnected(false); // Update connection status on failed request
       
-      // Use our custom mock generator on error
-      const mockResult = generateInputBasedCompressionResults(userData);
-      setCompressionResult(mockResult);
-      
+      // We'll still show the user something rather than nothing
+      // but make it clear it's simulated data
       toast({
-        title: "Using Simulation Mode",
-        description: "Couldn't connect to C++ backend. Using simulation data instead.",
+        title: "Backend Connection Failed",
+        description: "Couldn't connect to C++ backend. Please make sure the server is running at http://localhost:8081",
         variant: "destructive",
       });
+      
+      // Don't automatically fall back to simulation mode - inform the user
+      // of the connection error and let them decide what to do
     } finally {
       setIsCompressing(false);
     }
@@ -150,18 +115,39 @@ const CustomDataCompression = () => {
           className="min-h-32 font-mono text-sm"
         />
         
-        <Button 
-          onClick={handleCompression} 
-          disabled={isCompressing || !userData.trim()}
-          className="w-full"
-        >
-          {isCompressing ? 'Compressing...' : 'Compress Data'}
-        </Button>
+        <div className="flex flex-col space-y-2">
+          {isBackendConnected === false && (
+            <div className="text-xs text-destructive mb-2">
+              ⚠️ Not connected to C++ backend. Make sure the server is running at http://localhost:8081
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={testBackendConnection}
+                className="ml-2"
+              >
+                Retry Connection
+              </Button>
+            </div>
+          )}
+          
+          <Button 
+            onClick={handleCompression} 
+            disabled={isCompressing || !userData.trim()}
+            className="w-full"
+          >
+            {isCompressing ? 'Compressing...' : 'Compress Data'}
+          </Button>
+        </div>
 
         {compressionResult && (
           <Card className="mt-6">
             <CardHeader>
               <CardTitle className="text-md">Compression Results</CardTitle>
+              {isBackendConnected && (
+                <div className="text-xs text-green-500">
+                  ✓ Using C++ compression engine
+                </div>
+              )}
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -192,7 +178,7 @@ const CustomDataCompression = () => {
               </div>
             </CardContent>
             <CardFooter className="text-xs text-muted-foreground">
-              {isBackendConnected === true 
+              {isBackendConnected 
                 ? "Results from C++ compression engine" 
                 : "Simulation results (C++ backend not connected)"}
             </CardFooter>

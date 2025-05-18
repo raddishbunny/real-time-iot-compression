@@ -19,7 +19,9 @@ export class CompressionService {
   private baseUrl: string = 'http://localhost:8081';
   private _isConnected: boolean = false;
 
-  private constructor() {}
+  private constructor() {
+    // Initialize any properties here
+  }
 
   static getInstance(): CompressionService {
     if (!CompressionService.instance) {
@@ -34,43 +36,13 @@ export class CompressionService {
 
   setBaseUrl(url: string): void {
     this.baseUrl = url;
+    console.log(`Base URL set to: ${this.baseUrl}`);
   }
 
   private calculateCompressionRatio(originalSize: number, compressedSize: number): number {
     // Ensure ratio is between 0 and 1
     const ratio = Math.max(0, Math.min(1, 1 - (compressedSize / originalSize)));
     return Math.round(ratio * 100) / 100; // Round to 2 decimal places
-  }
-
-  async getCompressionResults(): Promise<CompressionResponse> {
-    try {
-      const response = await fetch(`${this.baseUrl}/api/compress`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      const data = await response.json();
-      
-      // Update results with bounded compression ratio
-      const results = data.results.map((result: CompressionResult) => ({
-        ...result,
-        compressionRatio: this.calculateCompressionRatio(
-          data.originalSize, 
-          result.compressedSize
-        )
-      }));
-      
-      this._isConnected = true;
-      
-      return {
-        ...data,
-        results,
-        originalData: data.originalData || "",
-      };
-    } catch (error) {
-      console.error('Error fetching compression results:', error);
-      this._isConnected = false;
-      return this.getMockCompressionResults();
-    }
   }
 
   async compressCustomData(data: string): Promise<CompressionResponse> {
@@ -114,38 +86,25 @@ export class CompressionService {
       console.error('Error compressing custom data:', error);
       this._isConnected = false;
       
-      // Let the component handle mock data generation instead
+      // Don't generate mock data here, just throw the error
       throw error;
     }
   }
 
-  private getMockCompressionResults(): CompressionResponse {
-    const originalSize = 1000;
-    return {
-      originalSize,
-      originalData: "Mock compression data",
-      results: [
-        { 
-          algorithm: 'huffman', 
-          compressionRatio: 0.45, 
-          compressedSize: 550 
-        },
-        { 
-          algorithm: 'delta', 
-          compressionRatio: 0.25, 
-          compressedSize: 750 
-        }
-      ]
-    };
-  }
-
   async testConnection(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.baseUrl}/`);
+      console.log(`Testing connection to ${this.baseUrl}`);
+      const response = await fetch(`${this.baseUrl}/`, {
+        // Adding a timeout to prevent long-hanging requests
+        signal: AbortSignal.timeout(3000)
+      });
+      
       if (response.ok) {
+        console.log('Backend connection successful');
         this._isConnected = true;
         return true;
       } else {
+        console.log('Backend connection failed: server returned an error');
         this._isConnected = false;
         return false;
       }
