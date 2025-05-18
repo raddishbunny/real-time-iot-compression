@@ -44,14 +44,22 @@ const SimulationControl = ({
       // Set the base URL for the compression service
       CompressionService.setBaseUrl(cppServerUrl);
       
-      // Test the connection by fetching data
-      await CompressionService.getCompressionResults();
+      // Test the connection - now using testConnection() instead of getCompressionResults()
+      const connected = await CompressionService.testConnection();
       
-      setIsCppConnected(true);
-      toast({
-        title: "Connected to C++ Backend",
-        description: "Successfully connected to the C++ compression server",
-      });
+      setIsCppConnected(connected);
+      if (connected) {
+        toast({
+          title: "Connected to C++ Backend",
+          description: "Successfully connected to the C++ compression server",
+        });
+      } else {
+        toast({
+          title: "Connection Failed",
+          description: "Could not connect to the C++ compression server",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error('Failed to connect to C++ backend:', error);
       setIsCppConnected(false);

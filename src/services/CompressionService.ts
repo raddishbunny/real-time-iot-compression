@@ -45,6 +45,44 @@ export class CompressionService {
     return Math.round(ratio * 100) / 100; // Round to 2 decimal places
   }
 
+  /**
+   * Gets compression results from the C++ backend using simulated data
+   */
+  async getCompressionResults(): Promise<CompressionResponse> {
+    try {
+      console.log(`Fetching compression results from ${this.baseUrl}/api/compress`);
+      
+      const response = await fetch(`${this.baseUrl}/api/compress`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const data = await response.json();
+      
+      // Update results with bounded compression ratio
+      const results = data.results.map((result: CompressionResult) => ({
+        ...result,
+        compressionRatio: this.calculateCompressionRatio(
+          data.originalSize, 
+          result.compressedSize
+        )
+      }));
+      
+      this._isConnected = true;
+      
+      return {
+        ...data,
+        results,
+        originalData: data.originalData || "",
+      };
+    } catch (error) {
+      console.error('Error fetching compression results:', error);
+      this._isConnected = false;
+      
+      // Instead of returning mock data, throw the error to be handled by the caller
+      throw error;
+    }
+  }
+
   async compressCustomData(data: string): Promise<CompressionResponse> {
     try {
       console.log(`Sending data to ${this.baseUrl}/api/compress/custom:`, { data });
